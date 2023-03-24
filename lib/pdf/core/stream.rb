@@ -6,6 +6,8 @@
 #
 # This is free software. Please see the LICENSE and COPYING files for details.
 
+require 'pathname'
+
 module PDF
   module Core
     class Stream
@@ -18,7 +20,12 @@ module PDF
       end
 
       def <<(io)
-        (@stream ||= +'') << io
+        if io.is_a?(Pathname)
+          @stream ||= io
+        else
+          (@stream ||= +'') << io
+        end
+
         @filtered_stream = nil
         self
       end
@@ -57,11 +64,17 @@ module PDF
       end
 
       def length
-        @stream.length
+        if @stream.is_a?(Pathname)
+          File.size(@stream)
+        else
+          @stream.length
+        end
       end
 
       def object
-        if filtered_stream
+        if filtered_stream.is_a?(Pathname)
+          ["stream\n", filtered_stream, "\nendstream\n"]
+        elsif filtered_stream
           "stream\n#{filtered_stream}\nendstream\n"
         else
           ''
@@ -73,8 +86,15 @@ module PDF
           filter_names = @filters.names
           filter_params = @filters.decode_params
 
+          filtered_length =
+            if filtered_stream.is_a?(Pathname)
+              File.size(@stream)
+            else
+              filtered_stream.length
+            end
+
           d = {
-            Length: filtered_stream.length
+            Length: filtered_length
           }
           if filter_names.any?
             d[:Filter] = filter_names

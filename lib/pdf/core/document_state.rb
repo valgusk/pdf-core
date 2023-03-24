@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'pathname'
+
 module PDF
   module Core
     class DocumentState # :nodoc:
@@ -71,12 +73,25 @@ module PDF
       def render_body(output)
         store.each do |ref|
           ref.offset = output.size
-          output <<
-            if @encrypt
-              ref.encrypted_object(@encryption_key)
+          if @encrypt
+            output << ref.encrypted_object(@encryption_key)
+          else
+            ref_object = ref.object
+
+            if ref_object.is_a?(Array)
+              ref_object.each do |part|
+                if part.is_a?(Pathname)
+                  File.open(part, 'rb') do |partf|
+                    partf.each_char(&output.method(:<<))
+                  end
+                else
+                  output << part
+                end
+              end
             else
-              ref.object
+              output << ref_object
             end
+          end
         end
       end
     end

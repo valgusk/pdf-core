@@ -7,6 +7,7 @@
 # This is free software. Please see the LICENSE and COPYING files for details.
 
 require 'pdf/core/utils'
+require 'pathname'
 
 module PDF
   module Core
@@ -27,15 +28,32 @@ module PDF
       end
 
       def object
-        output = +"#{@identifier} #{gen} obj\n"
-        if @stream.empty?
-          output << PDF::Core.pdf_object(data) << "\n"
-        else
-          output << PDF::Core.pdf_object(data.merge(@stream.data)) <<
-            "\n" << @stream.object
-        end
+        stream_object = @stream.object if @stream
 
-        output << "endobj\n"
+        if stream_object.is_a?(Array)
+          [
+            "#{@identifier} #{gen} obj\n",
+            *(
+              if @stream.empty?
+                [PDF::Core.pdf_object(data), "\n"]
+              else
+                [PDF::Core.pdf_object(data.merge(@stream.data)), "\n", *stream_object]
+              end
+            ),
+            "endobj\n"
+          ]
+        else
+          output = +"#{@identifier} #{gen} obj\n"
+
+          if @stream.empty?
+            output << PDF::Core.pdf_object(data) << "\n"
+          else
+            output << PDF::Core.pdf_object(data.merge(@stream.data)) <<
+              "\n" << stream_object
+          end
+
+          output << "endobj\n"
+        end
       end
 
       def <<(io)
