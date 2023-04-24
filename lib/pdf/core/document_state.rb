@@ -80,8 +80,8 @@ module PDF
 
             if ref_object.is_a?(Array)
               ref_object.each do |part|
-                if part.is_a?(Pathname)
-                  File.open(part, 'rb') do |partf|
+                if part.respond_to?(:pathname)
+                  File.open(part.pathname, 'rb') do |partf|
                     partf.each_char(&output.method(:<<))
                   end
                 else

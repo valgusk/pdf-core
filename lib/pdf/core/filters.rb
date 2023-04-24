@@ -12,12 +12,20 @@ module PDF
   module Core
     module Filters
       module FlateDecode
-        def self.encode(stream, _params = nil)
-          Zlib::Deflate.deflate(stream)
+        def self.encode(stream, params)
+          if stream.respond_to?(:pdf_flate_encode)
+            stream.pdf_flate_encode(params)
+          else
+            Zlib::Deflate.deflate(stream)
+          end
         end
 
-        def self.decode(stream, _params = nil)
-          Zlib::Inflate.inflate(stream)
+        def self.decode(stream, params = nil)
+          if stream.respond_to?(:pdf_flate_decode)
+            stream.pdf_flate_decode(params)
+          else
+            Zlib::Inflate.inflate(stream)
+          end
         end
       end
 

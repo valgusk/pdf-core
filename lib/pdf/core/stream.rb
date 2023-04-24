@@ -20,7 +20,7 @@ module PDF
       end
 
       def <<(io)
-        if io.is_a?(Pathname)
+        if io.respond_to?(:pathname)
           @stream ||= io
         else
           (@stream ||= +'') << io
@@ -64,15 +64,15 @@ module PDF
       end
 
       def length
-        if @stream.is_a?(Pathname)
-          File.size(@stream)
+        if @stream.respond_to?(:pathname)
+          File.size(@stream.pathname)
         else
           @stream.length
         end
       end
 
       def object
-        if filtered_stream.is_a?(Pathname)
+        if filtered_stream.respond_to?(:pathname)
           ["stream\n", filtered_stream, "\nendstream\n"]
         elsif filtered_stream
           "stream\n#{filtered_stream}\nendstream\n"
@@ -87,8 +87,8 @@ module PDF
           filter_params = @filters.decode_params
 
           filtered_length =
-            if filtered_stream.is_a?(Pathname)
-              File.size(@stream)
+            if filtered_stream.respond_to?(:pathname)
+              File.size(@stream.pathname)
             else
               filtered_stream.length
             end
